@@ -59,28 +59,27 @@ func EchoHandler(bot *Bot, message *Message) error {
 	return nil
 }
 
-func MessageSaverHandler(bot *Bot, message *Message) error {
-	s := strings.TrimSpace(message.Text)
-	if s == "" {
+func HelpMeCommandHandler(bot *Bot, message *Message) error {
+	if message.ReplyTo == nil {
+		const infoMessage = "Use this command to reply to the message you need help on"
+		bot.SendMessage(message.Chat.ID, infoMessage, 0)
 		return nil
 	}
 
-	bot.StorageRepo.SaveMessage(message.Chat.ID, *message)
-	return nil
-}
-
-func HelpMeCommandHandler(bot *Bot, message *Message) error {
-	extraQuestion := ""
-	if message.ReplyTo != nil {
-		s := message.ReplyTo.Text
-		answer, err := bot.MentorRepo.AskToFixMistake(s, extraQuestion)
-		if err != nil {
-			return err
-		}
-		bot.SendMessage(message.Chat.ID, answer, message.MessageID)
+	commandSlice := strings.SplitN(message.Text, " ", 2)
+	var extraQuestion string
+	if len(commandSlice) < 2 {
+		extraQuestion = ""
 	} else {
-		const infoMessage = "Use this command to reply to the message you need help on"
-		bot.SendMessage(message.Chat.ID, infoMessage, 0)
+		extraQuestion = commandSlice[1]
 	}
+	extraQuestion = strings.TrimSpace(extraQuestion)
+
+	s := message.ReplyTo.Text
+	answer, err := bot.MentorRepo.AskToFixMistake(s, extraQuestion)
+	if err != nil {
+		return err
+	}
+	bot.SendMessage(message.Chat.ID, answer, message.MessageID)
 	return nil
 }

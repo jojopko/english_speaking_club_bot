@@ -52,14 +52,16 @@ type Chat struct {
 type Bot struct {
 	tokenAPI    string
 	Whitelist   []int64
+	AdminId     int64
 	StorageRepo BotStorageRepository
-	MentorRepo  ai.AIMentorRepository
+	MentorRepo  ai.MentorRepository
 }
 
-func NewBot(token string, whitelist []int64, storageRepo BotStorageRepository, mentorRepo ai.AIMentorRepository) (*Bot, error) {
+func NewBot(token string, whitelist []int64, adminId int64, storageRepo BotStorageRepository, mentorRepo ai.MentorRepository) (*Bot, error) {
 	return &Bot{
 		tokenAPI:    token,
 		Whitelist:   whitelist,
+		AdminId:     adminId,
 		StorageRepo: storageRepo,
 		MentorRepo:  mentorRepo,
 	}, nil

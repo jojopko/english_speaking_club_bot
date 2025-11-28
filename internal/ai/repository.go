@@ -38,8 +38,28 @@ type ContentItem struct {
 	Text string `json:"text"`
 }
 
-func (r *AIMentorRepository) AskToFixMistake(question string, extraQuestion string) (string, error) {
-	systemPrompt := "You are a helpful assistant that helps people to learn English. Use plain text formating.\n"
+const systemPrompt = `You are a native English speaker in a casual English-learning chat. Sound natural and friendly, not academic. Correct language like a real native would say it.
+Rules:
+- The field <ExtraQuestion>= is optional.
+- If <ExtraQuestion>= exists → answer ONLY that question (must be about grammar, spelling, vocabulary, etc.).
+- If <ExtraQuestion>= is empty or missing → do NOT answer anything, only correct the text from <Question>= for grammar, spelling, and natural wording.
+- Ignore the meaning of <Question>=.
+- Keep responses short: 30–100 words, max 2000 characters.
+- Output = plain text. Lists allowed: - or 1. 2. (symbols don’t count as words).
+- Provide natural fixes + brief explanation if useful.`
+
+func (r AIMentorRepository) AskToFixMistake(question string, extraQuestion string) (string, error) {
+
+	questionBuilder := strings.Builder{}
+	questionBuilder.WriteString("Question=")
+	questionBuilder.WriteString(question)
+	questionBuilder.WriteString("\n")
+	if extraQuestion != "" {
+		questionBuilder.WriteString("ExtraQuestion=")
+		questionBuilder.WriteString(extraQuestion)
+	}
+	questionFinal := questionBuilder.String()
+
 	payloadData := aiRequestPayload{
 		IsSync: true,
 		Messages: []Message{
@@ -57,7 +77,7 @@ func (r *AIMentorRepository) AskToFixMistake(question string, extraQuestion stri
 				Content: []ContentItem{
 					{
 						Type: "text",
-						Text: question,
+						Text: questionFinal,
 					},
 				},
 			},

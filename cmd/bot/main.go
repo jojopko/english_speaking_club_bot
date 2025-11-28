@@ -22,12 +22,14 @@ func main() {
 		log.Fatal("No IDs in WHITELIST")
 	}
 
+	adminId, err := strconv.ParseInt(os.Getenv("ADMIN_ID"), 10, 64)
+
 	telegramBotToken := os.Getenv("TELEGRAM_BOT_TOKEN")
 	aiProviderToken := os.Getenv("AI_TOKEN")
 
 	storageRepo := telegrambot.NewInmemoryBotStorageRepository()
 	mentorRepo := ai.NewAIMentorRepository(aiProviderToken)
-	bot, err := telegrambot.NewBot(telegramBotToken, whitelist, storageRepo, mentorRepo)
+	bot, err := telegrambot.NewBot(telegramBotToken, whitelist, adminId, storageRepo, mentorRepo)
 	if err != nil {
 		log.Fatal("Failed to create Telegram bot:", err)
 	}
@@ -44,8 +46,8 @@ func whitelistIdsToSlice(whitelistIds string) []int64 {
 	}
 
 	whitelist := make([]int64, 0, 10)
-	whitelistStrings := strings.Split(whitelistCleaned, ",")
-	for _, s := range whitelistStrings {
+	whitelistStrings := strings.SplitSeq(whitelistCleaned, ",")
+	for s := range whitelistStrings {
 		n, err := strconv.ParseInt(s, 10, 64)
 		if err != nil {
 			continue
@@ -62,22 +64,41 @@ func startBot(bot *telegrambot.Bot) error {
 		return err
 	}
 
+	errorChan := make(chan error)
+
+	go func() {
+		for err := range errorChan {
+			log.Printf("Error in bot loop: %v", err)
+			errorTextMessage := "Error in bot loop: " + err.Error()
+			bot.SendMessage(bot.AdminId, errorTextMessage, 0)
+		}
+	}()
+
 	log.Printf("Starting bot with offset: %d", offset)
 
 	for {
 		updates, err := bot.GetUpdates(offset)
 		if err != nil {
-			return err
+			log.Printf("Error getting updates: %v", err)
+			continue
 		}
+
 		for _, update := range updates {
 			log.Printf("Received update: %+v", update)
-			if update.Message != nil {
-				telegrambot.BaseMiddleware(bot, update.Message)
-			}
 			offset = update.UpdateID + 1
-			if err := bot.StorageRepo.SaveLastSuccessfulUpdateID(update.UpdateID); err != nil {
-				return err
-			}
+			go func(update telegrambot.Update) {
+				if update.Message == nil {
+					return
+				}
+				err := telegrambot.BaseMiddleware(bot, update.Message)
+				if err != nil {
+					errorChan <- err
+				} else {
+					if err := bot.StorageRepo.SaveLastSuccessfulUpdateID(update.UpdateID); err != nil {
+						errorChan <- err
+					}
+				}
+			}(update)
 		}
 	}
 }
