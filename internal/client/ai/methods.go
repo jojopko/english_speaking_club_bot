@@ -38,24 +38,28 @@ func (c *client) AskQuestion(question string, extraQuestion string) (string, err
 		return "", err
 	}
 
-	url := c.baseUrl + "api/v1/networks/gpt-4o-mini"
+	url := c.baseUrl + "/api/v1/networks/gpt-4o-mini"
 
-	req, err := c.httpClient.Post(url, "application/json", strings.NewReader(string(payloadBytes)))
+	req, err := http.NewRequest("POST", url, strings.NewReader(string(payloadBytes)))
 	if err != nil {
 		return "", err
 	}
 	for key, value := range c.headers {
-		req.Header.Set(key, value)
+		req.Header.Add(key, value)
 	}
 
-	defer req.Body.Close()
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
 
-	if req.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("AI provider returned non-200 status: %d", req.StatusCode)
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("AI provider returned non-200 status: %d", resp.StatusCode)
 	}
 
 	var response GenApiResponse
-	if err := json.NewDecoder(req.Body).Decode(&response); err != nil {
+	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
 		return "", err
 	}
 
