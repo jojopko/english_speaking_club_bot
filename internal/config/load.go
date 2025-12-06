@@ -11,10 +11,11 @@ import (
 )
 
 const (
-	whitelistEnvKey       = "WHITELIST_IDS"
-	telegramBotEnvKey     = "TELEGRAM_BOT_TOKEN"
-	aiProviderTokenEnvKey = "AI_TOKEN"
-	adminIdEnvKey         = "ADMIN_ID"
+	whitelistEnvKey           = "WHITELIST_IDS"
+	telegramBotEnvKey         = "TELEGRAM_BOT_TOKEN"
+	aiProviderTokenEnvKey     = "AI_TOKEN"
+	adminIdEnvKey             = "ADMIN_ID"
+	telegramBotNicknameEnvKey = "TELEGRAM_BOT_NICKNAME"
 )
 
 const (
@@ -57,6 +58,11 @@ func Load() (Config, error) {
 		return Config{}, fmt.Errorf("failed to load AI provider token: %w", err)
 	}
 
+	telegramBotNickname, err := telegramBotNickname()
+	if err != nil {
+		return Config{}, fmt.Errorf("failed to load a bot nickname: %w", err)
+	}
+
 	config := Config{
 		WhitelistIDs:         whitelist,
 		AdminID:              adminId,
@@ -65,6 +71,7 @@ func Load() (Config, error) {
 		TelegramAPIBaseURL:   telegramBaseUrl,
 		AIProviderAPIBaseURL: genApiBaseUrl,
 		MentorSystemPrompt:   systemPrompt,
+		TelegramBotNickname:  telegramBotNickname,
 	}
 
 	return config, nil
@@ -126,6 +133,21 @@ func aiProviderToken() (string, error) {
 
 	if len(v) == 0 {
 		return "", fmt.Errorf("AI provider token cannot be empty")
+	}
+
+	return v, nil
+}
+
+func telegramBotNickname() (string, error) {
+	v := os.Getenv(telegramBotNicknameEnvKey)
+	v = strings.TrimSpace(v)
+
+	if len(v) == 0 {
+		return "", fmt.Errorf("bot nickname cannot be empty")
+	}
+
+	if !strings.HasPrefix(v, "@") {
+		v = fmt.Sprintf("@%s", v)
 	}
 
 	return v, nil

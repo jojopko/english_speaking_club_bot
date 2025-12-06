@@ -8,4 +8,5 @@ type Config struct {
 	TelegramAPIBaseURL   string
 	AIProviderAPIBaseURL string
 	MentorSystemPrompt   string
+	TelegramBotNickname  string
 }

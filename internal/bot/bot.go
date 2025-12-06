@@ -1,4 +1,4 @@
-package telegrambot
+package bot
 
 import (
 	"speaking-club-bot/internal/client/ai"

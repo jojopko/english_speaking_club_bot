@@ -6,15 +6,15 @@ import (
 	"speaking-club-bot/internal/client/telegram"
 	"speaking-club-bot/internal/config"
 	"speaking-club-bot/internal/storage"
-	"speaking-club-bot/internal/telegrambot"
+	"speaking-club-bot/internal/bot"
 )
 
 type App struct {
-	bot    telegrambot.Bot
+	bot    bot.Bot
 	config *config.Config
 }
 
-func (a *App) App() telegrambot.Bot {
+func (a *App) App() bot.Bot {
 	return a.bot
 }
 
@@ -29,7 +29,7 @@ func New(config *config.Config) (App, error) {
 	mentorClient := ai.New(config.AIProviderAPIBaseURL, config.AIProviderToken, config.MentorSystemPrompt)
 	telegramClient := telegram.New(config.TelegramAPIBaseURL, config.TelegramBotToken)
 
-	bot := telegrambot.NewBot(telegramClient, storageRepository, mentorClient)
+	bot := bot.NewBot(telegramClient, storageRepository, mentorClient)
 
 	return App{
 		bot:    bot,

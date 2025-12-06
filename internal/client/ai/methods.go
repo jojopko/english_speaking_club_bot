@@ -3,6 +3,7 @@ package ai
 import (
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"strings"
 )
@@ -32,6 +33,8 @@ func (c *client) AskQuestion(question string, extraQuestion string) (string, err
 		Messages: messages,
 		IsSync:   true,
 	}
+
+	slog.Debug("ai payload:", "payload", payloadData)
 
 	payloadBytes, err := json.Marshal(payloadData)
 	if err != nil {

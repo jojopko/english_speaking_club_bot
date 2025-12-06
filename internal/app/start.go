@@ -3,9 +3,9 @@ package app
 import (
 	"context"
 	"log/slog"
+	telegrambot "speaking-club-bot/internal/bot"
 	"speaking-club-bot/internal/client/telegram"
 	"speaking-club-bot/internal/config"
-	"speaking-club-bot/internal/telegrambot"
 )
 
 func (a *App) Start(ctx context.Context) error {
